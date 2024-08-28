@@ -1,0 +1,7 @@
+Title : Linux: remove everything in folder but not the folder
+Tag   : tech
+Link  : https://askubuntu.com/questions/1193389/how-to-remove-all-files-without-deleting-the-directory
+Author: Jack Wang
+Date  : 08/27/2024
+Notes :
+- rm [folder_name]/*
