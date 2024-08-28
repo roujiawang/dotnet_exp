@@ -57,9 +57,8 @@ namespace NoteLibrary
         public string GetJsonContent()
         {
             var encoderSettings = new TextEncoderSettings();
-            encoderSettings.AllowCharacter('\u0027'); // Allow single quotes
-            encoderSettings.AllowCharacter('\u0022'); // Allow double quotes
-            encoderSettings.AllowRange(UnicodeRanges.BasicLatin); // Allow basic Latin characters
+            encoderSettings.AllowCharacters('\u0027', '\u0022'); // allow single quotes and double quotes
+            encoderSettings.AllowRange(UnicodeRanges.BasicLatin); // allow basic Latin characters
 
             var options = new JsonSerializerOptions
             {
