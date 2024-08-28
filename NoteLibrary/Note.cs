@@ -1,16 +1,44 @@
 ﻿using System;
 using System.Collections.Generic;  // to use List<T>
 using System.Text.Json;  // for notes output in JSON format
+using System.Text.Json.Serialization;  // includes JSON converter
+using System.Text.Encodings.Web;  // manages escape characters
+using System.Text.Unicode;  // manages escape characters
 
 namespace NoteLibrary
 {
+    public class NoteCustomizedConverter : JsonConverter<DateTime>
+    {
+        private readonly string _format = "yyyy-MM-dd";  // for JSON files, specify time up to day
+        private readonly DateTime _defaultDate = new DateTime(1970, 1, 1);  // in case date is null
+
+        public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            string? dateString = reader.GetString();
+            if (string.IsNullOrEmpty(dateString))
+            {
+                return _defaultDate;
+            }
+
+            return DateTime.ParseExact(dateString, _format, null);
+        }
+        public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+        {
+            // use default formatting
+            writer.WriteStringValue(value.ToString(_format));
+        }
+    }
+
     public class Note
     {
         public string Title { get; set; } = "Note";
         public string Tag { get; set; } = "Tech";
         public string Link { get; set; } = "N/A";
         public string Author { get; set; } = "Jack Wang";  // Default author name
+
+        [JsonConverter(typeof(NoteCustomizedConverter))]
         public DateTime DateCreated { get; set; } = DateTime.Now;
+
         public List<string> BulletPoints { get; set; } = new List<string>();
 
         public string GetFormattedContent()
@@ -28,7 +56,18 @@ namespace NoteLibrary
 
         public string GetJsonContent()
         {
-            return JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
+            var encoderSettings = new TextEncoderSettings();
+            encoderSettings.AllowCharacter('\u0027'); // Allow single quotes
+            encoderSettings.AllowCharacter('\u0022'); // Allow double quotes
+            encoderSettings.AllowRange(UnicodeRanges.BasicLatin); // Allow basic Latin characters
+
+            var options = new JsonSerializerOptions
+            {
+                Encoder = JavaScriptEncoder.Create(encoderSettings),
+                WriteIndented = true
+            };
+
+            return JsonSerializer.Serialize(this, options);
         }
     }
 }
