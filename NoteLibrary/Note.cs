@@ -56,17 +56,30 @@ namespace NoteLibrary
 
         public string GetJsonContent()
         {
+            // Configure the encoder settings to allow specific characters
             var encoderSettings = new TextEncoderSettings();
-            encoderSettings.AllowCharacters('\u0027', '\u0022'); // allow single quotes and double quotes
+            encoderSettings.AllowCharacters('\u0027', '\u0022'); // allow single and double quotes as is
             encoderSettings.AllowRange(UnicodeRanges.BasicLatin); // allow basic Latin characters
 
+            // Configure JsonSerializerOptions with the custom encoder
             var options = new JsonSerializerOptions
             {
                 Encoder = JavaScriptEncoder.Create(encoderSettings),
-                WriteIndented = true
+                WriteIndented = true // make the JSON output more readable
             };
 
-            return JsonSerializer.Serialize(this, options);
+            try
+            {
+                // Serialize the current instance of the Note class to JSON
+                return JsonSerializer.Serialize(this, options);
+            }
+            catch (Exception ex)
+            {
+                // Handle serialization errors: just use empty string
+                Console.WriteLine($"Error serializing note to JSON: {ex.Message}");
+                return string.Empty;
+            }
         }
+
     }
 }
