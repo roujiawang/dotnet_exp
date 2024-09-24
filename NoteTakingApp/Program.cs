@@ -4,13 +4,27 @@ using NoteLibrary;
 
 class Program
 {
+    static Note note = new Note();
+    static string outputDir = "output";
+
     static void Main(string[] args)
     {
+        // Setup signal handling for accidental CTRL+C
+        Console.CancelKeyPress += (sender, e) =>
+        {
+            e.Cancel = true; // Prevent immediate termination
+            SaveNote();
+            Environment.Exit(0); // Exit after saving
+        };
+
+        AppDomain.CurrentDomain.ProcessExit += (sender, e) =>
+        {
+            SaveNote();
+        };
+
         Console.WriteLine("Taking Notes!");
 
-        // initialize a new note with default values specified in the Note class
-        Note note = new Note();
-
+        // Initialize a new note with default values specified in the Note class
         Console.Write($"Please enter note title (default: {note.Title}): ");
         string title = Console.ReadLine() ?? string.Empty;  // avoid assigning null to title
         if (!string.IsNullOrEmpty(title))
@@ -36,11 +50,11 @@ class Program
 
         string input;
 
-        while (true)
+        while (true) // Continuous input until the user exits
         {
             input = Console.ReadLine() ?? string.Empty;
 
-            // stop recording bullet points if the user types "exit" or hits Enter without inputting anything
+            // Stop recording bullet points if the user types "exit" or hits Enter without inputting anything
             if (input == string.Empty || input.ToLower() == "exit")
             {
                 break;
@@ -49,17 +63,34 @@ class Program
             note.BulletPoints.Add(input);
         }
 
-        string outputDir = "output";
-        Directory.CreateDirectory(outputDir);  // create the output folder if not exist
+        // Save note as formatted text and JSON at the end of input
+        SaveNoteToFile(note.GetFormattedContent(), $"{note.Title.Replace(" ", "_")}.txt");
+        SaveNoteToFile(note.GetJsonContent(), $"{note.Title.Replace(" ", "_")}.json");
+    }
 
-        // save note as formatted text
-        string fileName = Path.Combine(outputDir, $"{note.Title.Replace(" ", "_")}.txt");
-        File.WriteAllText(fileName, note.GetFormattedContent());
-        Console.WriteLine($"Note saved to {fileName}");
+    static void SaveNote()
+    {
+        if (!string.IsNullOrEmpty(note.Title) || 
+            !string.IsNullOrEmpty(note.Tag) || 
+            !string.IsNullOrEmpty(note.Link) || 
+            note.BulletPoints.Count > 0)
+        {
+            Console.WriteLine("Auto-saving your note...");
+            SaveNoteToFile(note.GetFormattedContent(), $"{note.Title.Replace(" ", "_")}.txt");
+            SaveNoteToFile(note.GetJsonContent(), $"{note.Title.Replace(" ", "_")}.json");
+            Console.WriteLine("Note saved.");
+        }
+        else
+        {
+            Console.WriteLine("No note content to save.");
+        }
+    }
 
-        // save note as JSON
-        string jsonFileName = Path.Combine(outputDir, $"{note.Title.Replace(" ", "_")}.json");
-        File.WriteAllText(jsonFileName, note.GetJsonContent());
-        Console.WriteLine($"Note saved as JSON to {jsonFileName}");
+    static void SaveNoteToFile(string content, string fileName)
+    {
+        Directory.CreateDirectory(outputDir);  // Create the output folder if it doesn't exist
+        string filePath = Path.Combine(outputDir, fileName);
+        File.WriteAllText(filePath, content);
+        Console.WriteLine($"Note saved to {filePath}");
     }
 }
